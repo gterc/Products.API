@@ -3,6 +3,7 @@ using MediatR;
 using Services;
 using Models;
 using DataAccess.Entities;
+using Products.API;
 
 namespace Controllers
 {
@@ -12,9 +13,11 @@ namespace Controllers
     public class ProductsController : APIControllerBase
     {
         private readonly IMediator mediator;
-        public ProductsController(IMediator mediator)
+        private readonly IKeyVaultManager secretManager;
+        public ProductsController(IMediator mediator, IKeyVaultManager secretManager)
         {
             this.mediator = mediator;
+            this.secretManager = secretManager;
         }
 
         [HttpGet]
@@ -24,7 +27,31 @@ namespace Controllers
             return HandleResult(result);
         }
 
-        [HttpGet("{id}") ]
+        [HttpGet("data")]
+        public async Task<IActionResult> GetDataAsync()
+        {
+            try
+            {
+                string secretValue = await
+
+                secretManager.GetSecret("database");
+
+                if (!string.IsNullOrEmpty(secretValue))
+                {
+                    return Ok(secretValue);
+                }
+                else
+                {
+                    return NotFound("Secret key not found.");
+                }
+            }
+            catch
+            {
+                return BadRequest("Error: Unable to read secret");
+            }
+        }
+
+        [HttpGet("{id}")]
         public async Task<IActionResult> GetProductAsync(int id)
         {
             var result = await mediator.Send(new GetProduct(id));
@@ -32,14 +59,14 @@ namespace Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody]Models.Product product)
+        public async Task<IActionResult> Post([FromBody] Models.Product product)
         {
             var result = await mediator.Send(new CreateProduct(product));
             return HandleResult(result);
         }
 
         [HttpPut]
-        public async Task<IActionResult> Put([FromBody]Models.Product product)
+        public async Task<IActionResult> Put([FromBody] Models.Product product)
         {
             var result = await mediator.Send(new UpdateProduct(product));
             return HandleResult(result);

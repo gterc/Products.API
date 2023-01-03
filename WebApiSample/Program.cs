@@ -6,6 +6,7 @@ using Microsoft.OpenApi.Models;
 using Services;
 using DataAccess.Profiles;
 using Products.API;
+using Microsoft.Extensions.Azure;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,6 +19,18 @@ builder.Services.AddEndpointsApiExplorer();
 //{
 //    options.UseInMemoryDatabase("Products");
 //});
+builder.Services.AddAzureClients(azureClientFactoryBuilder =>
+
+{
+
+    azureClientFactoryBuilder.AddSecretClient(
+
+   builder.Configuration.GetSection("KeyVault"));
+
+});
+
+builder.Services.AddSingleton<IKeyVaultManager, KeyVaultManager>();
+
 builder.Services.AddSingleton<ProductsContext>();
 //builder.Services.AddScoped<IProductsRepository, ProductsRepository>();
 builder.Services.AddScoped<IProductsRepository, SQLProductsRepository>();
